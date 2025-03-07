@@ -4,84 +4,66 @@
     async function fetchLeagueTable() {
         try {
             const response = await fetch('https://api.football-data.org/v4/competitions/PL/standings', {
+                method: 'GET',
+                mode: 'cors',  // Explicitly set CORS mode
                 headers: {
-                    'X-Auth-Token': API_KEY
+                    'X-Auth-Token': API_KEY,
                 }
             });
+            
+            if (response.status === 404) {
+                throw new Error('API endpoint not found. This might be due to CORS restrictions.');
+            }
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
+            
             const data = await response.json();
-            
-            // Update the table with the data
-            const tableBody = document.getElementById('tableBody');
-            const standings = data.standings[0].table; // Get the overall league standings
-            
-            standings.forEach((team, index) => {
-                const row = `
-                    <tr class="${index >= 10 ? 'hidden-teams' : ''}">
-                        <td>${team.position}</td>
-                        <td>
-                            <img src="${team.team.crest}" alt="${team.team.name}" style="height: 20px; margin-right: 5px;">
-                            ${team.team.shortName || team.team.name}
-                        </td>
-                        <td>${team.playedGames}</td>
-                        <td>${team.won}</td>
-                        <td>${team.draw}</td>
-                        <td>${team.lost}</td>
-                        <td>${team.goalsFor}</td>
-                        <td>${team.goalsAgainst}</td>
-                        <td>${team.goalDifference}</td>
-                        <td>${team.points}</td>
-                        <td>${team.form || '-'}</td>
-                    </tr>
-                `;
-                tableBody.insertAdjacentHTML('beforeend', row);
-            });
+            populateLeagueTable(data.standings[0].table);
         } catch (error) {
             console.error('Error fetching league table:', error);
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="11">Error loading table data</td></tr>';
+            document.getElementById('tableBody').innerHTML = `
+                <tr>
+                    <td colspan="11" class="text-center text-danger">
+                        <div class="alert alert-danger">
+                            Unable to load table data. Error: ${error.message}<br>
+                            <small>Note: This API may not work directly from browsers due to CORS restrictions. 
+                            Consider using a backend proxy or serverless function.</small>
+                        </div>
+                    </td>
+                </tr>`;
         }
     }
 
     async function fetchFixtures() {
         try {
             const response = await fetch('https://api.football-data.org/v4/teams/57/matches?status=SCHEDULED', {
+                method: 'GET',
+                mode: 'cors',  // Explicitly set CORS mode
                 headers: {
-                    'X-Auth-Token': API_KEY
+                    'X-Auth-Token': API_KEY,
                 }
             });
+            
+            if (response.status === 404) {
+                throw new Error('API endpoint not found. This might be due to CORS restrictions.');
+            }
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
+            
             const data = await response.json();
-            
-            // Update the fixtures list
-            const fixturesList = document.getElementById('fixturesList');
-            const fixtures = data.matches;
-            
-            fixtures.forEach(match => {
-                const competitionCode = getCompetitionCode(match.competition.name);
-                const matchDate = new Date(match.utcDate);
-                const fixture = `
-                    <div class="fixture-item mb-3" data-competition="${competitionCode}">
-                        <div class="card">
-                            <div class="card-body">
-                                <small class="text-muted">${matchDate.toLocaleDateString()} - ${match.competition.name}</small>
-                                <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <span>${match.homeTeam.shortName || match.homeTeam.name}</span>
-                                    <span class="badge bg-secondary">vs</span>
-                                    <span>${match.awayTeam.shortName || match.awayTeam.name}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                fixturesList.insertAdjacentHTML('beforeend', fixture);
-            });
+            populateFixtures(data.matches);
         } catch (error) {
             console.error('Error fetching fixtures:', error);
-            document.getElementById('fixturesList').innerHTML = '<div class="alert alert-danger">Error loading fixtures</div>';
+            document.getElementById('fixturesList').innerHTML = `
+                <div class="alert alert-danger">
+                    Unable to load fixtures. Error: ${error.message}<br>
+                    <small>Note: This API may not work directly from browsers due to CORS restrictions. 
+                    Consider using a backend proxy or serverless function.</small>
+                </div>`;
         }
     }
 
