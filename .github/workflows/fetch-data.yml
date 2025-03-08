@@ -1,0 +1,36 @@
+name: Fetch Football Data
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Runs every 6 hours
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Fetch standings data
+        run: |
+          curl -X GET \
+          -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
+          https://api.football-data.org/v4/competitions/PL/standings \
+          > data/standings.json
+
+      - name: Fetch fixtures data
+        run: |
+          curl -X GET \
+          -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
+          https://api.football-data.org/v4/teams/57/matches?status=SCHEDULED \
+          > data/fixtures.json
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add data/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update football data" && git push)
