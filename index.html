@@ -104,39 +104,20 @@
 
         async function fetchLeagueTable() {
             try {
-                console.log('Fetching league table...');
-                const response = await fetch(`${CORS_PROXY}${API_BASE}/competitions/PL/standings`, {
-                    headers: {
-                        'x-cors-api-key': 'temp_f1c1b9e1d0a7a9e55d3424a0c2fef014', // Free CORS.SH API key
-                        'X-Auth-Token': API_KEY
-                    }
-                });
-                
-                console.log('Response status:', response.status);
-                
+                const response = await fetch('data/standings.json');
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('API Response:', errorText);
-                    throw new Error(`API Error (${response.status}): ${errorText}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
                 const data = await response.json();
-                console.log('Received data:', data);
-                
-                if (!data.standings || !data.standings[0] || !data.standings[0].table) {
-                    throw new Error('Invalid data format received from API');
-                }
-                
                 populateLeagueTable(data.standings[0].table);
             } catch (error) {
-                console.error('Detailed error:', error);
+                console.error('Error fetching league table:', error);
                 document.getElementById('tableBody').innerHTML = `
                     <tr>
                         <td colspan="11" class="text-center">
                             <div class="alert alert-danger">
                                 <strong>Error Loading Data</strong><br>
-                                ${error.message}<br>
-                                <small class="text-muted">Check console for more details</small>
+                                Unable to load table data. Please try again later.
                             </div>
                         </td>
                     </tr>`;
@@ -172,37 +153,18 @@
 
         async function fetchFixtures() {
             try {
-                console.log('Fetching fixtures...');
-                const response = await fetch(`${CORS_PROXY}${API_BASE}/teams/57/matches?status=SCHEDULED`, {
-                    headers: {
-                        'x-cors-api-key': 'temp_f1c1b9e1d0a7a9e55d3424a0c2fef014', // Free CORS.SH API key
-                        'X-Auth-Token': API_KEY
-                    }
-                });
-                
-                console.log('Response status:', response.status);
-                
+                const response = await fetch('data/fixtures.json');
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('API Response:', errorText);
-                    throw new Error(`API Error (${response.status}): ${errorText}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
                 const data = await response.json();
-                console.log('Received fixtures:', data);
-                
-                if (!data.matches) {
-                    throw new Error('Invalid data format received from API');
-                }
-                
                 populateFixtures(data.matches);
             } catch (error) {
-                console.error('Detailed error:', error);
+                console.error('Error fetching fixtures:', error);
                 document.getElementById('fixturesList').innerHTML = `
                     <div class="alert alert-danger">
                         <strong>Error Loading Fixtures</strong><br>
-                        ${error.message}<br>
-                        <small class="text-muted">Check console for more details</small>
+                        Unable to load fixtures. Please try again later.
                     </div>`;
             }
         }
